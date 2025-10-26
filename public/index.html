@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KBank Slip Verification - ทดสอบระบบ</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .tab {
+            padding: 15px 30px;
+            background: none;
+            border: none;
+            font-size: 1em;
+            cursor: pointer;
+            color: #666;
+            transition: all 0.3s;
+            border-bottom: 3px solid transparent;
+        }
+
+        .tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+            font-weight: bold;
+        }
+
+        .tab:hover {
+            color: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 15px;
+            padding: 50px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 20px;
+        }
+
+        .upload-area:hover {
+            background: #f8f9ff;
+            border-color: #764ba2;
+        }
+
+        .upload-area.drag-over {
+            background: #f0f0ff;
+            border-color: #764ba2;
+        }
+
+        .upload-icon {
+            font-size: 4em;
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 8px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            width: 100%;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .result-box {
+            margin-top: 30px;
+            padding: 25px;
+            border-radius: 12px;
+            background: #f8f9fa;
+        }
+
+        .result-box.success {
+            background: #d4edda;
+            border: 2px solid #28a745;
+        }
+
+        .result-box.error {
+            background: #f8d7da;
+            border: 2px solid #dc3545;
+        }
+
+        .result-box.warning {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+        }
+
+        .result-header {
+            font-size: 1.3em;
+            font-weight: bold;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .score-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            background: white;
+            font-weight: bold;
+            margin-left: auto;
+        }
+
+        .transaction-info {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            font-weight: 500;
+            color: #666;
+        }
+
+        .info-value {
+            color: #333;
+            font-weight: 600;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 30px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .preview-image {
+            max-width: 100%;
+            max-height: 400px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .errors-list, .warnings-list {
+            list-style: none;
+            margin: 15px 0;
+        }
+
+        .errors-list li, .warnings-list li {
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        .errors-list li::before {
+            content: "✗ ";
+            color: #dc3545;
+            font-weight: bold;
+        }
+
+        .warnings-list li::before {
+            content: "⚠ ";
+            color: #ffc107;
+            font-weight: bold;
+        }
+
+        pre {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏦 KBank Slip Verification</h1>
+            <p>ระบบตรวจสอบความถูกต้องของสลิปโอนเงิน K PLUS</p>
+        </div>
+
+        <div class="main-content">
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('verify')">ตรวจสอบสลิป</button>
+                <button class="tab" onclick="switchTab('parse')">แยกข้อมูล</button>
+                <button class="tab" onclick="switchTab('transaction')">ตรวจสอบเลขธุรกรรม</button>
+            </div>
+
+            <!-- Tab 1: Verify Slip -->
+            <div id="verify-tab" class="tab-content active">
+                <div class="upload-area" id="upload-area-verify" onclick="document.getElementById('file-input-verify').click()">
+                    <div class="upload-icon">📄</div>
+                    <h3>คลิกหรือลากไฟล์มาที่นี่</h3>
+                    <p>รองรับไฟล์ JPG, PNG (สูงสุด 10MB)</p>
+                </div>
+                <input type="file" id="file-input-verify" accept="image/jpeg,image/png" style="display: none;" onchange="handleFileSelect('verify', this.files[0])">
+                
+                <img id="preview-verify" class="preview-image" style="display: none;">
+
+                <div class="form-group">
+                    <label>จำนวนเงินที่คาดหวัง (ถ้ามี)</label>
+                    <input type="number" id="expected-amount" placeholder="เช่น 40.00" step="0.01">
+                </div>
+
+                <div class="form-group">
+                    <label>ชื่อผู้รับที่คาดหวัง (ถ้ามี)</label>
+                    <input type="text" id="expected-recipient" placeholder="เช่น นาย ปัณฑร บ">
+                </div>
+
+                <button class="btn" id="verify-btn" onclick="verifySlip()" disabled>ตรวจสอบสลิป</button>
+
+                <div id="result-verify"></div>
+            </div>
+
+            <!-- Tab 2: Parse Slip -->
+            <div id="parse-tab" class="tab-content">
+                <div class="upload-area" id="upload-area-parse" onclick="document.getElementById('file-input-parse').click()">
+                    <div class="upload-icon">📄</div>
+                    <h3>คลิกหรือลากไฟล์มาที่นี่</h3>
+                    <p>รองรับไฟล์ JPG, PNG (สูงสุด 10MB)</p>
+                </div>
+                <input type="file" id="file-input-parse" accept="image/jpeg,image/png" style="display: none;" onchange="handleFileSelect('parse', this.files[0])">
+                
+                <img id="preview-parse" class="preview-image" style="display: none;">
+
+                <button class="btn" id="parse-btn" onclick="parseSlip()" disabled>แยกข้อมูล</button>
+
+                <div id="result-parse"></div>
+            </div>
+
+            <!-- Tab 3: Transaction ID -->
+            <div id="transaction-tab" class="tab-content">
+                <div class="form-group">
+                    <label>เลขที่รายการ (Transaction ID)</label>
+                    <input type="text" id="transaction-id" placeholder="เช่น 015298170819BQR02651">
+                </div>
+
+                <button class="btn" onclick="validateTransactionId()">ตรวจสอบเลขธุรกรรม</button>
+
+                <div id="result-transaction"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3000/api/slip';
+        let currentFiles = {
+            verify: null,
+            parse: null
+        };
+
+        function switchTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Show selected tab
+            document.getElementById(`${tabName}-tab`).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        function handleFileSelect(type, file) {
+            if (!file) return;
+
+            currentFiles[type] = file;
+            
+            // Show preview
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const preview = document.getElementById(`preview-${type}`);
+                preview.src = e.target.result;
+                preview.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+
+            // Enable button
+            document.getElementById(`${type}-btn`).disabled = false;
+        }
+
+        // Drag and drop
+        ['verify', 'parse'].forEach(type => {
+            const area = document.getElementById(`upload-area-${type}`);
+            
+            area.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                area.classList.add('drag-over');
+            });
+
+            area.addEventListener('dragleave', () => {
+                area.classList.remove('drag-over');
+            });
+
+            area.addEventListener('drop', (e) => {
+                e.preventDefault();
+                area.classList.remove('drag-over');
+                const file = e.dataTransfer.files[0];
+                if (file && (file.type === 'image/jpeg' || file.type === 'image/png')) {
+                    handleFileSelect(type, file);
+                }
+            });
+        });
+
+        async function verifySlip() {
+            const resultDiv = document.getElementById('result-verify');
+            const btn = document.getElementById('verify-btn');
+            
+            btn.disabled = true;
+            resultDiv.innerHTML = '<div class="loading"><div class="spinner"></div><p>กำลังตรวจสอบสลิป...</p></div>';
+
+            const formData = new FormData();
+            formData.append('slip', currentFiles.verify);
+            
+            const expectedAmount = document.getElementById('expected-amount').value;
+            const expectedRecipient = document.getElementById('expected-recipient').value;
+            
+            if (expectedAmount) formData.append('expectedAmount', expectedAmount);
+            if (expectedRecipient) formData.append('expectedRecipient', expectedRecipient);
+
+            try {
+                const response = await fetch(`${API_BASE}/verify`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+                displayVerifyResult(data);
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="result-box error"><div class="result-header">❌ เกิดข้อผิดพลาด</div><p>${error.message}</p></div>`;
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        function displayVerifyResult(data) {
+            const resultDiv = document.getElementById('result-verify');
+            
+            if (!data.success) {
+                resultDiv.innerHTML = `<div class="result-box error"><div class="result-header">❌ ไม่สามารถตรวจสอบได้</div><p>${data.error}</p></div>`;
+                return;
+            }
+
+            const validation = data.validation;
+            const slipData = data.slipData;
+            const boxClass = validation.valid ? 'success' : (validation.errors.length > 0 ? 'error' : 'warning');
+            const icon = validation.valid ? '✅' : (validation.errors.length > 0 ? '❌' : '⚠️');
+
+            let html = `
+                <div class="result-box ${boxClass}">
+                    <div class="result-header">
+                        ${icon} ${validation.valid ? 'สลิปถูกต้อง' : 'สลิปไม่ถูกต้อง'}
+                        <span class="score-badge">${validation.scorePercentage}%</span>
+                    </div>
+
+                    <div class="transaction-info">
+                        <h4>ข้อมูลธุรกรรม</h4>
+                        <div class="info-row">
+                            <span class="info-label">เลขที่รายการ:</span>
+                            <span class="info-value">${slipData.transactionId || '-'}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">ประเภท:</span>
+                            <span class="info-value">${validation.details.transactionInfo?.typeDescription || '-'}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">จำนวนเงิน:</span>
+                            <span class="info-value">${slipData.amount ? slipData.amount.toFixed(2) + ' บาท' : '-'}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">เวลา:</span>
+                            <span class="info-value">${slipData.dateTime?.time || '-'}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">ผู้รับ:</span>
+                            <span class="info-value">${slipData.recipient || '-'}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">คุณภาพ OCR:</span>
+                            <span class="info-value">${slipData.ocrConfidence?.toFixed(1)}%</span>
+                        </div>
+                    </div>`;
+
+            if (validation.errors.length > 0) {
+                html += '<h4>ข้อผิดพลาด:</h4><ul class="errors-list">';
+                validation.errors.forEach(error => {
+                    html += `<li>${error}</li>`;
+                });
+                html += '</ul>';
+            }
+
+            if (validation.warnings.length > 0) {
+                html += '<h4>คำเตือน:</h4><ul class="warnings-list">';
+                validation.warnings.forEach(warning => {
+                    html += `<li>${warning}</li>`;
+                });
+                html += '</ul>';
+            }
+
+            html += `<details><summary style="cursor: pointer; font-weight: bold; margin-top: 20px;">📋 ดูรายงานแบบเต็ม</summary><pre>${data.report}</pre></details>`;
+            html += '</div>';
+
+            resultDiv.innerHTML = html;
+        }
+
+        async function parseSlip() {
+            const resultDiv = document.getElementById('result-parse');
+            const btn = document.getElementById('parse-btn');
+            
+            btn.disabled = true;
+            resultDiv.innerHTML = '<div class="loading"><div class="spinner"></div><p>กำลังแยกข้อมูล...</p></div>';
+
+            const formData = new FormData();
+            formData.append('slip', currentFiles.parse);
+
+            try {
+                const response = await fetch(`${API_BASE}/parse`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    resultDiv.innerHTML = `
+                        <div class="result-box success">
+                            <div class="result-header">✅ แยกข้อมูลสำเร็จ</div>
+                            <pre>${JSON.stringify(result.data, null, 2)}</pre>
+                        </div>`;
+                } else {
+                    resultDiv.innerHTML = `<div class="result-box error"><div class="result-header">❌ ไม่สามารถแยกข้อมูลได้</div><p>${result.error}</p></div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="result-box error"><div class="result-header">❌ เกิดข้อผิดพลาด</div><p>${error.message}</p></div>`;
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        async function validateTransactionId() {
+            const resultDiv = document.getElementById('result-transaction');
+            const transactionId = document.getElementById('transaction-id').value.trim();
+
+            if (!transactionId) {
+                resultDiv.innerHTML = '<div class="result-box error"><div class="result-header">❌ กรุณากรอกเลขที่รายการ</div></div>';
+                return;
+            }
+
+            resultDiv.innerHTML = '<div class="loading"><div class="spinner"></div><p>กำลังตรวจสอบ...</p></div>';
+
+            try {
+                const response = await fetch(`${API_BASE}/validate-transaction-id`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ transactionId })
+                });
+
+                const result = await response.json();
+                
+                if (result.success && result.validation.valid) {
+                    const parsed = result.validation.parsed;
+                    resultDiv.innerHTML = `
+                        <div class="result-box success">
+                            <div class="result-header">✅ เลขธุรกรรมถูกต้อง</div>
+                            <div class="transaction-info">
+                                <div class="info-row">
+                                    <span class="info-label">เลขที่รายการ:</span>
+                                    <span class="info-value">${parsed.raw}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">ประเภท:</span>
+                                    <span class="info-value">${parsed.typeDescription}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">ปี:</span>
+                                    <span class="info-value">${parsed.year}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">เวลา:</span>
+                                    <span class="info-value">${parsed.time}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">ลำดับ:</span>
+                                    <span class="info-value">${parsed.sequence}</span>
+                                </div>
+                            </div>
+                        </div>`;
+                } else {
+                    resultDiv.innerHTML = `<div class="result-box error"><div class="result-header">❌ เลขธุรกรรมไม่ถูกต้อง</div><p>${result.validation.message}</p></div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="result-box error"><div class="result-header">❌ เกิดข้อผิดพลาด</div><p>${error.message}</p></div>`;
+            }
+        }
+    </script>
+</body>
+</html>

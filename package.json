@@ -1,0 +1,32 @@
+{
+  "name": "slip-verification-api",
+  "version": "1.0.0",
+  "description": "API for verifying KBank payment slips using OCR and transaction ID validation",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "test": "jest"
+  },
+  "keywords": [
+    "slip",
+    "verification",
+    "ocr",
+    "kbank",
+    "payment"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.18.2",
+    "multer": "^1.4.5-lts.1",
+    "tesseract.js": "^5.0.4",
+    "sharp": "^0.33.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.3",
+    "jest": "^29.7.0"
+  }
+}
